@@ -7,20 +7,25 @@ app.use(express.json());
 const EVOLUTION_URL = 'https://evolution-api-production-2ec0.up.railway.app';
 const EVOLUTION_KEY = 'a10569129facb78ccf7e179ad917475733e9253ab20f509818a8b02ab124b170';
 const INSTANCIA = 'Profissional de Barbearia';
-const BARBEIRO_PHONE = '5511999805125';
 
 async function enviarMensagem(phone, mensagem) {
-  await fetch(`${EVOLUTION_URL}/message/sendText/${INSTANCIA}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': EVOLUTION_KEY
-    },
-    body: JSON.stringify({
-      number: phone,
-      text: mensagem
-    })
-  });
+  try {
+    const response = await fetch(`${EVOLUTION_URL}/message/sendText/${INSTANCIA}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': EVOLUTION_KEY
+      },
+      body: JSON.stringify({
+        number: phone,
+        text: mensagem
+      })
+    });
+    const data = await response.json();
+    console.log('Resposta Evolution:', JSON.stringify(data));
+  } catch(err) {
+    console.log('Erro ao enviar:', err.message);
+  }
 }
 
 app.get('/', (req, res) => {
@@ -28,28 +33,20 @@ app.get('/', (req, res) => {
 });
 
 app.post('/webhook', async (req, res) => {
+  console.log('Webhook recebido:', JSON.stringify(req.body));
+  
   const body = req.body;
-  const phone = body?.data?.key?.remoteJid || '';
-  const fromMe = body?.data?.key?.fromMe || false;
+  const phone = body?.data?.key?.remoteJid;
+  const fromMe = body?.data?.key?.fromMe;
+  const event = body?.event;
 
-  if (!fromMe && phone) {
+  console.log('Event:', event, 'Phone:', phone, 'FromMe:', fromMe);
+
+  if (phone && !fromMe && event === 'messages.upsert') {
     await enviarMensagem(phone,
-      `Olá! 😊 Seja bem-vindo à *BarberPro - Barbearia Premium*! ✂️\n\nPara agendar seu horário acesse nosso app:\n👉 https://glittery-raindrop-83460e.netlify.app\n\nEscolha o serviço, barbeiro, data e horário. Confirmação automática! 🗓️`
+      `Olá! 😊 Seja bem-vindo à *BarberPro*! ✂️\n\nPara agendar acesse:\n👉 https://glittery-raindrop-83460e.netlify.app`
     );
   }
-
-  res.status(200).json({ status: 'ok' });
-});
-
-app.post('/confirmar', async (req, res) => {
-  const { clientePhone, clienteNome, servico, data, hora, preco } = req.body;
-
-  const msgCliente = `✅ *Agendamento Confirmado — BarberPro!*\n\nOlá, ${clienteNome}! Seu horário está confirmado. ✂️\n\n📅 ${data}\n🕐 ${hora}\n💈 ${servico}\n💰 R$ ${preco}\n\nAté lá!`;
-
-  const msgBarbeiro = `🔔 *Novo Agendamento!*\n\nCliente: ${clienteNome}\n📅 ${data}\n🕐 ${hora}\n💈 ${servico}\n💰 R$ ${preco}\n📱 ${clientePhone}`;
-
-  await enviarMensagem(clientePhone, msgCliente);
-  await enviarMensagem(BARBEIRO_PHONE, msgBarbeiro);
 
   res.status(200).json({ status: 'ok' });
 });
