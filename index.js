@@ -6,7 +6,7 @@ app.use(express.json());
 
 const EVOLUTION_URL = 'https://evolution-api-production-2ec0.up.railway.app';
 const EVOLUTION_KEY = 'a10569129facb78ccf7e179ad917475733e9253ab20f509818a8b02ab124b170';
-const INSTANCIA = 'Profissional de Barbearia';
+const INSTANCIA = 'Proficional de Barbeária';
 const BARBEIRO_PHONE = '5511999805125';
 
 async function enviarMensagem(phone, mensagem) {
@@ -35,15 +35,10 @@ app.get('/', (req, res) => {
 
 app.post('/webhook', async (req, res) => {
   console.log('WEBHOOK:', JSON.stringify(req.body));
-  
   try {
     const body = req.body;
-    const phone = body?.data?.key?.remoteJid || 
-                  body?.key?.remoteJid || 
-                  body?.remoteJid;
-    const fromMe = body?.data?.key?.fromMe || 
-                   body?.key?.fromMe || false;
-
+    const phone = body?.data?.key?.remoteJid || body?.key?.remoteJid;
+    const fromMe = body?.data?.key?.fromMe || body?.key?.fromMe || false;
     if (phone && !fromMe) {
       await enviarMensagem(phone,
         `Olá! 😊 Seja bem-vindo à *BarberPro*! ✂️\n\nPara agendar acesse:\n👉 https://glittery-raindrop-83460e.netlify.app`
@@ -52,7 +47,6 @@ app.post('/webhook', async (req, res) => {
   } catch(err) {
     console.log('Erro webhook:', err.message);
   }
-
   res.status(200).json({ status: 'ok' });
 });
 
